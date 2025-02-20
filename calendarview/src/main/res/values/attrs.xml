@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 自定义日历 View -->
+    <declare-styleable name="CalendarView">
+        <attr name="cv_weekTextColor" format="color|reference"/>
+        <attr name="cv_weekTextSize" format="dimension|reference"/>
+        <attr name="cv_textColor" format="color|reference"/>
+        <attr name="cv_selectTextColor" format="color|reference"/>
+        <attr name="cv_textSize" format="dimension|reference"/>
+        <attr name="cv_selectTextSize" format="dimension|reference"/>
+        <attr name="cv_dayBackground" format="reference"/>
+        <attr name="cv_todayBackground" format="reference"/>
+        <attr name="cv_selectDayBackground" format="reference"/>
+        <attr name="cv_disableDayBackground" format="reference"/>
+        <attr name="cv_rangeBackgroundColor" format="color|reference"/>
+        <attr name="cv_dateFormatPattern" format="string|reference"/>
+        <attr name="cv_isChangeDateStatus" format="boolean|reference"/>
+        <attr name="cv_selectMode" format="enum">
+            <enum name="single" value="0"/>
+            <enum name="multiple" value="1"/>
+            <enum name="range" value="2"/>
+        </attr>
+    </declare-styleable>
+</resources>
