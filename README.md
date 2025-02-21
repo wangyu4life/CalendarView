@@ -1,4 +1,6 @@
 # CalendarView
+[![](https://jitpack.io/v/wangyu4life/CalendarView.svg)](https://jitpack.io/#wangyu4life/CalendarView)
+
 
 ## 一个多功能日历
 ### 功能
@@ -7,3 +9,25 @@
 3. 支持默认文字样式，选中文字样式
 4. 支持当前日期样式，选中样式，不可选样式
 5. 支持跳转到指定日期
+
+### 使用（Gradle）
+首先，在项目的 `build.gradle（project）` 文件里面添加:
+
+```gradle
+allprojects {
+	repositories {  
+
+        maven { url "https://jitpack.io" }
+		
+    }
+}
+```
+
+然后，在你需要用到CalendarView的module中的 `build.gradle（module）` 文件里面添加：
+```gradle
+dependencies {  
+
+        implementation 'com.github.wangyu4life:CalendarView:1.0.0'
+
+}
+```
