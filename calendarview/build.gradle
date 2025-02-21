@@ -33,7 +33,7 @@ android {
 publishing {
     publications {
         release(MavenPublication) {
-            groupId = 'com.github.wyyzlxg'
+            groupId = 'com.github.wangyu4life'
             artifactId = 'CalendarView'
             version = '1.0.0'
 
