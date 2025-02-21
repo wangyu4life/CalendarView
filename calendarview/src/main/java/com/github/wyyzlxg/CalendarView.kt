@@ -33,7 +33,12 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
     private lateinit var monthContainerView: RecyclerView
     private var monthAdapter: MonthAdapter? = null
     private var pagerSnapHelper: PagerSnapHelper? = null
+
+    /** 日历数据  */
     private val dateList: MutableList<Date> = mutableListOf()
+
+    /** 日历最小高度  */
+    private val minHeight = DensityUtils.dp2px(350f)
 
     /** 事件监听  */
     private var mOnDateClickListener: OnDateClickListener? = null
@@ -144,7 +149,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        measureChildren(widthMeasureSpec, if (orientation == HORIZONTAL) DensityUtils.dp2px(350f) else heightMeasureSpec)
+        setMeasuredDimension(widthMeasureSpec, if (orientation == HORIZONTAL) minHeight else heightMeasureSpec)
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
