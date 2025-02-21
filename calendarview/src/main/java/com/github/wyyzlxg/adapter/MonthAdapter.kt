@@ -15,7 +15,7 @@ import java.util.Date
  * @author wangyu
  *
  */
-class MonthAdapter(private val context: Context, private val data: MutableList<Date>, private val manager: CalendarManager) : RecyclerView.Adapter<MonthAdapter.ViewHolder>() {
+internal class MonthAdapter(private val context: Context, private val data: MutableList<Date>, private val manager: CalendarManager) : RecyclerView.Adapter<MonthAdapter.ViewHolder>() {
     private var mOnDateClickListener: ((Int, Int, Int) -> Unit)? = null
     private var mOnDateStateChangeListener: ((List<String>) -> Unit)? = null
 

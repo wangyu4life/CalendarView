@@ -11,7 +11,7 @@ import java.util.Locale
  * @author wangyu
  *
  */
-class CalendarManager {
+internal class CalendarManager {
 
     private var _calendar: Calendar = Calendar.getInstance(Locale.CHINA)
     private var _startDate: Calendar? = null

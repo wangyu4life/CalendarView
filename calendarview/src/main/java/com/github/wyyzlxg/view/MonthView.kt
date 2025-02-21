@@ -27,7 +27,7 @@ import kotlin.math.abs
  * @author wangyu
  *
  */
-class MonthView @JvmOverloads constructor(
+internal class MonthView @JvmOverloads constructor(
     context: Context?,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0

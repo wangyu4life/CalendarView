@@ -187,14 +187,17 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
     }
 
     /**
-     * 跳转到当前日期
+     * 跳转到指定日期，默认为当前日期.
      */
-    fun jumpToCurrentDate() {
+    fun jumpToCurrentDate(time: Long = 0L) {
         for (i in dateList.indices) {
             val calendar = Calendar.getInstance(Locale.CHINA)
             calendar.time = dateList[i]
             val year = calendar.get(Calendar.YEAR)
             val month = calendar.get(Calendar.MONTH)
+            if (time != 0L) {
+                calendarManager.mCalendar.timeInMillis = time
+            }
             val currentYear = calendarManager.mCalendar[Calendar.YEAR]
             val currentMonth = calendarManager.mCalendar[Calendar.MONTH]
             if (currentYear == year && currentMonth == month) {
@@ -204,6 +207,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
         }
         monthContainerView.scrollToPosition(currentPosition)
     }
+
 
     /**
      * 设置选中的日期数据.
