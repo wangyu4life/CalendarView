@@ -16,6 +16,9 @@ internal class CalendarManager {
     private var _calendar: Calendar = Calendar.getInstance(Locale.CHINA)
     private var _startDate: Calendar? = null
     private var _endDate: Calendar? = null
+    private var _monthTextColor = 0
+    private var _monthTextSize = 0f
+    private var _monthTypeface: Typeface? = null
     private var _weekTextColor = 0
     private var _weekTextSize = 0f
     private var _weekTypeface: Typeface? = null
@@ -33,10 +36,12 @@ internal class CalendarManager {
     private var _selectMode = 0
     private var _selectDate: MutableList<String> = mutableListOf()
     private var _disableDate: MutableList<String> = mutableListOf()
+    private var _showMonthTitle = true
     private var _dateFormatPattern: String? = null
+    private var _rowHeight = 0
 
     /** 当前显示的日期  */
-    var mCalendar: Calendar
+    var calendar: Calendar
         get() {
             return _calendar
         }
@@ -45,7 +50,7 @@ internal class CalendarManager {
         }
 
     /** 日历开始的日期  */
-    var mStartDate: Calendar?
+    var startDate: Calendar?
         get() {
             return _startDate
         }
@@ -54,7 +59,7 @@ internal class CalendarManager {
         }
 
     /** 日历结束的日期  */
-    var mEndDate: Calendar?
+    var endDate: Calendar?
         get() {
             return _endDate
         }
@@ -62,8 +67,44 @@ internal class CalendarManager {
             _endDate = value
         }
 
+    /** 默认月份文字颜色  */
+    var monthTextColor: Int
+        get() {
+            if (_monthTextColor == 0) {
+                _monthTextColor = -0x1000000
+            }
+            return _monthTextColor
+        }
+        set(value) {
+            _monthTextColor = value
+        }
+
+    /** 默认月份文字大小  */
+    var monthTextSize: Float
+        get() {
+            if (_monthTextSize == 0f) {
+                _monthTextSize = DensityUtils.dp2px(16f).toFloat()
+            }
+            return _monthTextSize
+        }
+        set(value) {
+            _monthTextSize = value
+        }
+
+    /** 默认月份文字字体  */
+    var monthTypeface: Typeface?
+        get() {
+            if (_monthTypeface == null) {
+                _monthTypeface = Typeface.DEFAULT_BOLD
+            }
+            return _monthTypeface
+        }
+        set(value) {
+            _monthTypeface = value
+        }
+
     /** 默认周文字颜色  */
-    var mWeekTextColor: Int
+    var weekTextColor: Int
         get() {
             if (_weekTextColor == 0) {
                 _weekTextColor = -0x1000000
@@ -75,7 +116,7 @@ internal class CalendarManager {
         }
 
     /** 默认周文字大小  */
-    var mWeekTextSize: Float
+    var weekTextSize: Float
         get() {
             if (_weekTextSize == 0f) {
                 _weekTextSize = DensityUtils.dp2px(14f).toFloat()
@@ -87,7 +128,7 @@ internal class CalendarManager {
         }
 
     /** 默认周文字字体  */
-    var mWeekTypeface: Typeface?
+    var weekTypeface: Typeface?
         get() {
             if (_weekTypeface == null) {
                 _weekTypeface = Typeface.DEFAULT
@@ -99,7 +140,7 @@ internal class CalendarManager {
         }
 
     /** 默认文字颜色  */
-    var mTextColor: Int
+    var textColor: Int
         get() {
             if (_textColor == 0) {
                 _textColor = -0x1000000
@@ -111,7 +152,7 @@ internal class CalendarManager {
         }
 
     /** 选中后文字颜色  */
-    var mSelectTextColor: Int
+    var selectTextColor: Int
         get() {
             if (_selectTextColor == 0) {
                 _selectTextColor = -0x1000000
@@ -123,7 +164,7 @@ internal class CalendarManager {
         }
 
     /** 默认文字大小  */
-    var mTextSize: Float
+    var textSize: Float
         get() {
             if (_textSize == 0f) {
                 _textSize = DensityUtils.dp2px(14f).toFloat()
@@ -135,7 +176,7 @@ internal class CalendarManager {
         }
 
     /** 选中后文字大小  */
-    var mSelectTextSize: Float
+    var selectTextSize: Float
         get() {
             if (_selectTextSize == 0f) {
                 _selectTextSize = DensityUtils.dp2px(14f).toFloat()
@@ -147,7 +188,7 @@ internal class CalendarManager {
         }
 
     /** 默认字体  */
-    var mTypeface: Typeface?
+    var typeface: Typeface?
         get() {
             if (_typeface == null) {
                 _typeface = Typeface.DEFAULT
@@ -159,7 +200,7 @@ internal class CalendarManager {
         }
 
     /** 默认天的背景  */
-    var mDayBackground: Drawable?
+    var dayBackground: Drawable?
         get() {
             return _dayBackground
         }
@@ -168,7 +209,7 @@ internal class CalendarManager {
         }
 
     /** 今天的背景  */
-    var mTodayBackground: Drawable?
+    var todayBackground: Drawable?
         get() {
             return _todayBackground
         }
@@ -177,7 +218,7 @@ internal class CalendarManager {
         }
 
     /** 选中后天的背景  */
-    var mSelectDayBackground: Drawable?
+    var selectDayBackground: Drawable?
         get() {
             return _selectDayBackground
         }
@@ -186,7 +227,7 @@ internal class CalendarManager {
         }
 
     /** 禁用天的背景  */
-    var mDisableDayBackground: Drawable?
+    var disableDayBackground: Drawable?
         get() {
             return _disableDayBackground
         }
@@ -195,7 +236,7 @@ internal class CalendarManager {
         }
 
     /** 范围背景颜色  */
-    var mRangeBackgroundColor: Int
+    var rangeBackgroundColor: Int
         get() {
             if (_rangeBackgroundColor == 0) {
                 _rangeBackgroundColor = -0x1000000
@@ -235,7 +276,7 @@ internal class CalendarManager {
         }
 
     /** 已选择日期数据  */
-    var mSelectDate: MutableList<String>
+    var selectDate: MutableList<String>
         get() {
             return _selectDate
         }
@@ -244,7 +285,7 @@ internal class CalendarManager {
         }
 
     /** 禁用的日期数据  */
-    var mDisableDate: MutableList<String>
+    var disableDate: MutableList<String>
         get() {
             return _disableDate
         }
@@ -252,8 +293,17 @@ internal class CalendarManager {
             _disableDate = value
         }
 
+    /** 是否显示月份标题  */
+    var showMonthTitle: Boolean
+        get() {
+            return _showMonthTitle
+        }
+        set(value) {
+            _showMonthTitle = value
+        }
+
     /** 日期格式化格式  */
-    var mDateFormatPattern: String?
+    var dateFormatPattern: String?
         get() {
             if (_dateFormatPattern == null) {
                 _dateFormatPattern = "yyyyMMdd"
@@ -262,5 +312,17 @@ internal class CalendarManager {
         }
         set(value) {
             _dateFormatPattern = value
+        }
+
+    /** 行高  */
+    var rowHeight: Int
+        get() {
+            if (_rowHeight == 0) {
+                _rowHeight = DensityUtils.dp2px(50f)
+            }
+            return _rowHeight
+        }
+        set(value) {
+            _rowHeight = value
         }
 }

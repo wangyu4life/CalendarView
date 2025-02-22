@@ -2,6 +2,8 @@
 <resources>
     <!-- 自定义日历 View -->
     <declare-styleable name="CalendarView">
+        <attr name="cv_monthTextColor" format="color|reference"/>
+        <attr name="cv_monthTextSize" format="dimension|reference"/>
         <attr name="cv_weekTextColor" format="color|reference"/>
         <attr name="cv_weekTextSize" format="dimension|reference"/>
         <attr name="cv_textColor" format="color|reference"/>
@@ -15,6 +17,7 @@
         <attr name="cv_rangeBackgroundColor" format="color|reference"/>
         <attr name="cv_dateFormatPattern" format="string|reference"/>
         <attr name="cv_isChangeDateStatus" format="boolean|reference"/>
+        <attr name="cv_showMonthTitle" format="boolean|reference"/>
         <attr name="cv_selectMode" format="enum">
             <enum name="single" value="0"/>
             <enum name="multiple" value="1"/>

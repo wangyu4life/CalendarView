@@ -16,7 +16,6 @@ import android.view.ViewConfiguration
 import androidx.annotation.ColorInt
 import com.github.wyyzlxg.manager.CalendarManager
 import com.github.wyyzlxg.utils.DateUtils
-import com.github.wyyzlxg.utils.DensityUtils
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -32,13 +31,19 @@ internal class MonthView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-    private var calendarManager: CalendarManager? = null
+    private var mCalendarManager: CalendarManager? = null
 
     /** 当前月份的日期  */
     private var mCalendar: Calendar = Calendar.getInstance(Locale.CHINA)
 
     /** 选中的日期  */
     private val mSelectCalendar: Calendar = Calendar.getInstance(Locale.CHINA)
+
+    /** 是否显示月份标题  */
+    private var mShowMonthTitle = true
+
+    /** 月份文字画笔  */
+    private val mMonthPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
     /** 周文字画笔  */
     private val mWeekPaint: Paint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -51,6 +56,15 @@ internal class MonthView @JvmOverloads constructor(
 
     /** 星期  */
     private val mWeeks = arrayOf("日", "一", "二", "三", "四", "五", "六")
+
+    /** 默认月份文字大小  */
+    private var mMonthTextSize = 0f
+
+    /** 默认月份文字颜色  */
+    private var mMonthTextColor = 0
+
+    /** 默认月份文字字体  */
+    private var mMonthTypeface: Typeface? = null
 
     /** 默认周文字大小  */
     private var mWeekTextSize = 0f
@@ -98,22 +112,21 @@ internal class MonthView @JvmOverloads constructor(
     private lateinit var mDisableDate: MutableList<String>
 
     /** 日期状态是否能够改变  */
-    private var isChangeDateStatus = false
+    private var mIsChangeDateStatus = false
 
     /** 存储对应列行处的天  */
     private val mDays = Array(6) { IntArray(7) }
 
-    /** 事件监听  */
-    private var mOnDateClickListener: ((Int, Int, Int) -> Unit)? = null
-    private var mOnDateStateChangeListener: ((List<String>) -> Unit)? = null
-
-    private var mDateFormat :SimpleDateFormat? = null
-
     /** 日期格式化格式  */
     private var mDateFormatPattern: String? = null
 
+    private var mDateFormat :SimpleDateFormat? = null
+
     /** 总行数  */
-    private var mTotalRow = 7
+    private var mTotalRow = 8
+
+    /** 月份和周行数  */
+    private var mMonthWeekRow = 1
 
     /** 每列宽度  */
     private var mColumnWidth = 0
@@ -125,6 +138,9 @@ internal class MonthView @JvmOverloads constructor(
     private var mDownX = 0
     private var mDownY = 0
 
+    /** 事件监听  */
+    private var mOnDateClickListener: ((Int, Int, Int) -> Unit)? = null
+    private var mOnDateStateChangeListener: ((List<String>) -> Unit)? = null
 
     /**
      * 设置日历管理器.
@@ -132,7 +148,7 @@ internal class MonthView @JvmOverloads constructor(
      * @param manager 日历管理器.
      */
     fun setCalendarManager(manager: CalendarManager) {
-        calendarManager = manager
+        mCalendarManager = manager
         initStyle()
     }
 
@@ -169,8 +185,8 @@ internal class MonthView @JvmOverloads constructor(
                 if (diffX < mSlop && diffY < mSlop) {
                     val column = upX / mColumnWidth
                     val row = upY / mRowHeight
-                    if (row != 0) {
-                        onClick(mDays[row - 1][column])
+                    if (row > mMonthWeekRow - 1) {
+                        onClick(mDays[row - mMonthWeekRow][column])
                     }
                 }
             }
@@ -191,8 +207,8 @@ internal class MonthView @JvmOverloads constructor(
             return
         }
         mOnDateClickListener?.invoke(year, month, day)
-        if (isChangeDateStatus) {
-            when (calendarManager!!.selectMode) {
+        if (mIsChangeDateStatus) {
+            when (mCalendarManager!!.selectMode) {
                 0 -> {  // 单选
                     mSelectDate.clear()
                     mSelectDate.add(date)
@@ -213,8 +229,8 @@ internal class MonthView @JvmOverloads constructor(
                         }
 
                         1 -> {
-                            val startTime = DateUtils.getTimeMillisWithPattern(mSelectDate[0], calendarManager!!.mDateFormatPattern!!)
-                            val endTime = DateUtils.getTimeMillisWithPattern(date, calendarManager!!.mDateFormatPattern!!)
+                            val startTime = DateUtils.getTimeMillisWithPattern(mSelectDate[0], mCalendarManager!!.dateFormatPattern!!)
+                            val endTime = DateUtils.getTimeMillisWithPattern(date, mCalendarManager!!.dateFormatPattern!!)
                             if (startTime / 1000 >= endTime / 1000) {
                                 mSelectDate.clear()
                                 mSelectDate.add(date)
@@ -238,7 +254,6 @@ internal class MonthView @JvmOverloads constructor(
                     }
                 }
             }
-            Log.d("MonthView", "mSelectDate: ${calendarManager!!.mSelectDate.size}")
             mOnDateStateChangeListener?.invoke(mSelectDate)
             invalidate()
         }
@@ -246,27 +261,45 @@ internal class MonthView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        setMeasuredDimension(widthMeasureSpec, DensityUtils.dp2px(50f * mTotalRow))
+        setMeasuredDimension(widthMeasureSpec, mRowHeight * mTotalRow)
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-
         mColumnWidth = width / 7
-        mRowHeight = height / mTotalRow
+
+        /** 绘制月份标题  */
+        if (mCalendarManager!!.showMonthTitle) {
+            mMonthPaint.setColor(mMonthTextColor)
+            mMonthPaint.textSize = mMonthTextSize
+            if (mMonthTypeface != null) {
+                mMonthPaint.setTypeface(mMonthTypeface)
+            }
+            val monthStr = "${mCalendar[Calendar.YEAR]}年${mCalendar[Calendar.MONTH] + 1}月"
+            val textWidth = mMonthPaint.measureText(monthStr)
+            val x = (width - textWidth) / 2
+            val y = mRowHeight / 2 - (mMonthPaint.ascent() + mMonthPaint.descent()) / 2
+            canvas.drawText(monthStr, x, y, mMonthPaint)
+        }
 
         /** 绘制星期  */
         mWeekPaint.textSize = mWeekTextSize
+        if (mWeekTypeface != null) {
+            mWeekPaint.setTypeface(mWeekTypeface)
+        }
         for (i in mWeeks.indices) {
             val text = mWeeks[i]
             val textWidth = mWeekPaint.measureText(text).toInt()
             val startX = mColumnWidth * i + (mColumnWidth - textWidth) / 2
-            val startY = (mRowHeight / 2 - (mWeekPaint.ascent() + mWeekPaint.descent()) / 2).toInt()
+            val startY = (mRowHeight / 2 + (if(mShowMonthTitle) mRowHeight else 0) - (mWeekPaint.ascent() + mWeekPaint.descent()) / 2).toInt()
             drawWeekText(canvas, text, mWeekTextColor, mWeekTextSize, startX, startY)
         }
 
         /** 绘制日期  */
         mDayPaint.textSize = mTextSize
+        if (mTypeface != null) {
+            mDayPaint.setTypeface(mTypeface)
+        }
         val year = mCalendar[Calendar.YEAR]
         // 获取的月份
         val month = mCalendar[Calendar.MONTH]
@@ -279,10 +312,10 @@ internal class MonthView @JvmOverloads constructor(
         // 绘制每天
         for (day in 1..days) {
             // 获取天在行、列的位置
-            val row = (day - 1 + week - 1) / 7 + 1
+            val row = (day - 1 + week - 1) / 7 + mMonthWeekRow
             val column = (day - 1 + week - 1) % 7
             // 存储对应天
-            mDays[row - 1][column] = day
+            mDays[row - mMonthWeekRow][column] = day
             val dayStr = day.toString()
             val textWidth = mDayPaint.measureText(dayStr)
             val x = (mColumnWidth * column + (mColumnWidth - textWidth) / 2).toInt()
@@ -291,7 +324,9 @@ internal class MonthView @JvmOverloads constructor(
             // 判断 day 是否在选择日期内
             val cDate = Calendar.getInstance(Locale.CHINA)
             cDate.set(year, month, day)
-            if (today.get(Calendar.YEAR) == year && today.get(Calendar.MONTH) == month && today.get(Calendar.DAY_OF_MONTH) == day) {
+            if (!mSelectDate.contains(getFormatDate(today[Calendar.YEAR], today[Calendar.MONTH], today[Calendar.DAY_OF_MONTH])) &&
+                today.get(Calendar.YEAR) == year && today.get(Calendar.MONTH) == month && today.get(Calendar.DAY_OF_MONTH) == day
+                ) {
                 // 绘制今天背景和文字颜色
                 drawBackground(canvas, mTodayBackground, column, row)
                 drawDayText(canvas, dayStr, mTextColor, mTextSize, x, y)
@@ -310,7 +345,7 @@ internal class MonthView @JvmOverloads constructor(
                 drawDayText(canvas, dayStr, mTextColor, mTextSize, x, y)
             } else {
                 // 绘制选择后的背景和文字颜色
-                drawBackground(canvas, mSelectDayBackground, column, row, calendarManager!!.selectMode == 2)
+                drawBackground(canvas, mSelectDayBackground, column, row, mCalendarManager!!.selectMode == 2)
                 drawDayText(canvas, dayStr, mSelectTextColor, mSelectTextSize, x, y)
             }
         }
@@ -328,10 +363,9 @@ internal class MonthView @JvmOverloads constructor(
     private fun drawBackground(canvas: Canvas, background: Drawable?, column: Int, row: Int, isRangeMode: Boolean = false) {
         if (isRangeMode && mSelectDate.size > 1) {
             mRangeBackgroundPaint.color = mRangeBackgroundColor
-            val backgroundWidth = background?.intrinsicWidth ?: mColumnWidth
             val backgroundHeight = background?.intrinsicHeight ?: mRowHeight
 
-            val day = mDays[row - 1][column]
+            val day = mDays[row - mMonthWeekRow][column]
             val date = getFormatDate(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH], day)
             val index = mSelectDate.indexOf(date)
             when (index) {
@@ -435,26 +469,33 @@ internal class MonthView @JvmOverloads constructor(
     }
 
     private fun initStyle() {
-        if (calendarManager != null) {
-            mWeekTextColor = calendarManager!!.mWeekTextColor
-            mWeekTextSize = calendarManager!!.mWeekTextSize
-            mWeekTypeface = calendarManager!!.mWeekTypeface
+        if (mCalendarManager != null) {
+            mShowMonthTitle = mCalendarManager!!.showMonthTitle
+            mMonthTextColor = mCalendarManager!!.monthTextColor
+            mMonthTextSize = mCalendarManager!!.monthTextSize
+            mMonthTypeface = mCalendarManager!!.monthTypeface
 
-            mTextColor = calendarManager!!.mTextColor
-            mSelectTextColor = calendarManager!!.mSelectTextColor
-            mTextSize = calendarManager!!.mTextSize
-            mSelectTextSize = calendarManager!!.mSelectTextSize
-            mRangeBackgroundColor = calendarManager!!.mRangeBackgroundColor
-            mDayBackground = calendarManager!!.mDayBackground
-            mTodayBackground = calendarManager!!.mTodayBackground
-            mSelectDayBackground = calendarManager!!.mSelectDayBackground
-            mDisableDayBackground = calendarManager!!.mDisableDayBackground
-            mSelectDate = calendarManager!!.mSelectDate
-            mDisableDate = calendarManager!!.mDisableDate
-            mDateFormatPattern = calendarManager!!.mDateFormatPattern
-            isChangeDateStatus = calendarManager!!.isChangeDateStatus
+            mWeekTextColor = mCalendarManager!!.weekTextColor
+            mWeekTextSize = mCalendarManager!!.weekTextSize
+            mWeekTypeface = mCalendarManager!!.weekTypeface
 
-            mDateFormat = SimpleDateFormat(calendarManager!!.mDateFormatPattern, Locale.CHINA)
+            mTextColor = mCalendarManager!!.textColor
+            mSelectTextColor = mCalendarManager!!.selectTextColor
+            mTextSize = mCalendarManager!!.textSize
+            mSelectTextSize = mCalendarManager!!.selectTextSize
+
+            mRangeBackgroundColor = mCalendarManager!!.rangeBackgroundColor
+            mDayBackground = mCalendarManager!!.dayBackground
+            mTodayBackground = mCalendarManager!!.todayBackground
+            mSelectDayBackground = mCalendarManager!!.selectDayBackground
+            mDisableDayBackground = mCalendarManager!!.disableDayBackground
+            mSelectDate = mCalendarManager!!.selectDate
+            mDisableDate = mCalendarManager!!.disableDate
+
+            mRowHeight = mCalendarManager!!.rowHeight
+            mIsChangeDateStatus = mCalendarManager!!.isChangeDateStatus
+            mDateFormatPattern = mCalendarManager!!.dateFormatPattern
+            mDateFormat = SimpleDateFormat(mCalendarManager!!.dateFormatPattern, Locale.CHINA)
         }
     }
 
@@ -466,10 +507,11 @@ internal class MonthView @JvmOverloads constructor(
         val month = mCalendar[Calendar.MONTH]
         val days = DateUtils.getMonthDays(year, month)
         val week = DateUtils.getFirstDayWeek(year, month)
+        mMonthWeekRow = if (mShowMonthTitle) 2 else 1
         mTotalRow = if (DateUtils.getLastDayWeek(year, month) == Calendar.SATURDAY) {
-            (days + week - 1) / 7 + 1
+            (days + week - 1) / 7 + mMonthWeekRow
         } else {
-            (days + week - 1) / 7 + 2
+            (days + week - 1) / 7 + 1 + mMonthWeekRow
         }
     }
 

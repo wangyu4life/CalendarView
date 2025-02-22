@@ -38,7 +38,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
     private val dateList: MutableList<Date> = mutableListOf()
 
     /** 日历最小高度  */
-    private val minHeight = DensityUtils.dp2px(350f)
+    private var minHeight = 0
 
     /** 事件监听  */
     private var mOnDateClickListener: OnDateClickListener? = null
@@ -79,6 +79,10 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
 
     private fun initAttrs(attrs: AttributeSet?) {
         val a = context.obtainStyledAttributes(attrs, R.styleable.CalendarView)
+        val monthTextColor = a.getColor(R.styleable.CalendarView_cv_monthTextColor, Color.BLACK)
+        setMonthTextColor(monthTextColor)
+        val monthTextSize = a.getDimension(R.styleable.CalendarView_cv_monthTextSize, DensityUtils.sp2px(16f).toFloat())
+        setMonthTextSize(monthTextSize)
         val weekTextColor = a.getColor(R.styleable.CalendarView_cv_weekTextColor, Color.BLACK)
         setWeekTextColor(weekTextColor)
         val weekTextSize = a.getDimension(R.styleable.CalendarView_cv_weekTextSize, DensityUtils.sp2px(14f).toFloat())
@@ -105,6 +109,8 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
         calendarManager.selectMode = selectMode
         val isChange = a.getBoolean(R.styleable.CalendarView_cv_isChangeDateStatus, true)
         calendarManager.isChangeDateStatus = isChange
+        val showMonthTitle = a.getBoolean(R.styleable.CalendarView_cv_showMonthTitle, true)
+        calendarManager.showMonthTitle = showMonthTitle
         val pattern = a.getString(R.styleable.CalendarView_cv_dateFormatPattern)
         dateFormatPattern = pattern
         a.recycle()
@@ -129,11 +135,11 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     currentPosition = (recyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-                    calendarManager.mCalendar.time = dateList[currentPosition]
+                    calendarManager.calendar.time = dateList[currentPosition]
                     mOnDateChangeListener?.onSelectedMonthChange(
                         this@CalendarView,
-                        calendarManager.mCalendar[Calendar.YEAR],
-                        calendarManager.mCalendar[Calendar.MONTH]
+                        calendarManager.calendar[Calendar.YEAR],
+                        calendarManager.calendar[Calendar.MONTH]
                     )
                 }
             }
@@ -149,6 +155,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        minHeight = if (calendarManager.showMonthTitle) DensityUtils.dp2px(400f) else DensityUtils.dp2px(350f)
         setMeasuredDimension(widthMeasureSpec, if (orientation == HORIZONTAL) minHeight else heightMeasureSpec)
     }
 
@@ -160,13 +167,13 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
     @SuppressLint("NotifyDataSetChanged")
     private fun loadCalendarData() {
         dateList.clear()
-        if (calendarManager.mStartDate == null) {
-            calendarManager.mStartDate = Calendar.getInstance(Locale.CHINA)
-            calendarManager.mStartDate!!.set(2000, 0, 1)
+        if (calendarManager.startDate == null) {
+            calendarManager.startDate = Calendar.getInstance(Locale.CHINA)
+            calendarManager.startDate!!.set(2000, 0, 1)
         }
-        if (calendarManager.mEndDate == null) {
-            calendarManager.mEndDate = Calendar.getInstance(Locale.CHINA)
-            calendarManager.mEndDate!!.set(2070, 0, 1)
+        if (calendarManager.endDate == null) {
+            calendarManager.endDate = Calendar.getInstance(Locale.CHINA)
+            calendarManager.endDate!!.set(2070, 0, 1)
         }
         if (startDate!!.time > endDate!!.time) {
             throw IllegalArgumentException("开始时间不能大于结束时间")
@@ -201,10 +208,10 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
             val year = calendar.get(Calendar.YEAR)
             val month = calendar.get(Calendar.MONTH)
             if (time != 0L) {
-                calendarManager.mCalendar.timeInMillis = time
+                calendarManager.calendar.timeInMillis = time
             }
-            val currentYear = calendarManager.mCalendar[Calendar.YEAR]
-            val currentMonth = calendarManager.mCalendar[Calendar.MONTH]
+            val currentYear = calendarManager.calendar[Calendar.YEAR]
+            val currentMonth = calendarManager.calendar[Calendar.MONTH]
             if (currentYear == year && currentMonth == month) {
                 currentPosition = i
                 break
@@ -221,8 +228,8 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * 如果没有设置则以默认的格式 [.DATE_FORMAT_PATTERN] 进行格式化.
      */
     fun setSelectDate(days: MutableList<String>) {
-        calendarManager.mSelectDate.clear()
-        calendarManager.mSelectDate.addAll(days)
+        calendarManager.selectDate.clear()
+        calendarManager.selectDate.addAll(days)
         monthAdapter?.refreshMonthData()
     }
 
@@ -233,8 +240,8 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * 如果没有设置则以默认的格式 [.DATE_FORMAT_PATTERN] 进行格式化.
      */
     fun setDisableDate(days: MutableList<String>) {
-        calendarManager.mDisableDate.clear()
-        calendarManager.mDisableDate.addAll(days)
+        calendarManager.disableDate.clear()
+        calendarManager.disableDate.addAll(days)
         monthAdapter?.refreshMonthData()
     }
 
@@ -244,7 +251,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          *
          * @return 日期数据.
          */
-        get() = calendarManager.mSelectDate
+        get() = calendarManager.selectDate
 
     val disableDate: List<String>
         /**
@@ -252,17 +259,17 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          *
          * @return 日期数据.
          */
-        get() = calendarManager.mDisableDate
+        get() = calendarManager.disableDate
 
     /**
      * 切换到下一个月.
      */
     fun nextMonth() {
         if (currentPosition < dateList.size - 1) {
-            calendarManager.mCalendar.add(Calendar.MONTH, 1)
+            calendarManager.calendar.add(Calendar.MONTH, 1)
             currentPosition++
             monthContainerView.scrollToPosition(currentPosition)
-            mOnDateChangeListener?.onSelectedMonthChange(this, calendarManager.mCalendar[Calendar.YEAR], calendarManager.mCalendar[Calendar.MONTH])
+            mOnDateChangeListener?.onSelectedMonthChange(this, calendarManager.calendar[Calendar.YEAR], calendarManager.calendar[Calendar.MONTH])
         }
     }
 
@@ -271,10 +278,10 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      */
     fun lastMonth() {
         if (currentPosition > 0) {
-            calendarManager.mCalendar.add(Calendar.MONTH, -1)
+            calendarManager.calendar.add(Calendar.MONTH, -1)
             currentPosition--
             monthContainerView.scrollToPosition(currentPosition)
-            mOnDateChangeListener?.onSelectedMonthChange(this, calendarManager.mCalendar[Calendar.YEAR], calendarManager.mCalendar[Calendar.MONTH])
+            mOnDateChangeListener?.onSelectedMonthChange(this, calendarManager.calendar[Calendar.YEAR], calendarManager.calendar[Calendar.MONTH])
         }
     }
 
@@ -284,42 +291,72 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          *
          * @return year.
          */
-        get() = calendarManager.mCalendar[Calendar.YEAR]
+        get() = calendarManager.calendar[Calendar.YEAR]
     val month: Int
         /**
          * 获取当前月份.
          *
          * @return month.
          */
-        get() = calendarManager.mCalendar[Calendar.MONTH]
+        get() = calendarManager.calendar[Calendar.MONTH]
     var calendar: Calendar
         /**
          * 获取当前显示的 Calendar 对象.
          *
          * @return Calendar 对象.
          */
-        get() = calendarManager.mCalendar
+        get() = calendarManager.calendar
         /**
          * 设置当前显示的 Calendar 对象.
          *
          * @param calendar 对象.
          */
         set(calendar) {
-            calendarManager.mCalendar = calendar
+            calendarManager.calendar = calendar
         }
     var startDate: Calendar?
-        get() = calendarManager.mStartDate
+        get() = calendarManager.startDate
         set(calendar) {
-            calendarManager.mStartDate = calendar
+            calendarManager.startDate = calendar
             loadCalendarData()
         }
 
     var endDate: Calendar?
-        get() = calendarManager.mEndDate
+        get() = calendarManager.endDate
         set(calendar) {
-            calendarManager.mEndDate = calendar
+            calendarManager.endDate = calendar
             loadCalendarData()
         }
+
+    /**
+     * 设置月份文字颜色.
+     *
+     * @param textColor 文字颜色 [ColorInt].
+     */
+    fun setMonthTextColor(@ColorInt textColor: Int) {
+        calendarManager.monthTextColor = textColor
+        monthAdapter?.refreshMonthData()
+    }
+
+    /**
+     * 设置月份文字大小.
+     *
+     * @param textSize 文字大小 (sp).
+     */
+    fun setMonthTextSize(textSize: Float) {
+        calendarManager.monthTextSize = textSize
+        monthAdapter?.refreshMonthData()
+    }
+
+    /**
+     * 设置月份字体.
+     *
+     * @param typeface [Typeface].
+     */
+    fun setMonthTypeface(typeface: Typeface?) {
+        calendarManager.monthTypeface = typeface
+        monthAdapter?.refreshMonthData()
+    }
 
     /**
      * 设置周文字颜色.
@@ -327,7 +364,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textColor 文字颜色 [ColorInt].
      */
     fun setWeekTextColor(@ColorInt textColor: Int) {
-        calendarManager.mWeekTextColor = textColor
+        calendarManager.weekTextColor = textColor
         monthAdapter?.refreshMonthData()
     }
 
@@ -337,7 +374,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textSize 文字大小 (sp).
      */
     fun setWeekTextSize(textSize: Float) {
-        calendarManager.mWeekTextSize = textSize
+        calendarManager.weekTextSize = textSize
         monthAdapter?.refreshMonthData()
     }
 
@@ -347,7 +384,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param typeface [Typeface].
      */
     fun setWeekTypeface(typeface: Typeface?) {
-        calendarManager.mWeekTypeface = typeface
+        calendarManager.weekTypeface = typeface
         monthAdapter?.refreshMonthData()
     }
 
@@ -357,7 +394,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textColor 文字颜色 [ColorInt].
      */
     fun setTextColor(@ColorInt textColor: Int) {
-        calendarManager.mTextColor = textColor
+        calendarManager.textColor = textColor
         monthAdapter?.refreshMonthData()
     }
 
@@ -367,7 +404,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textColor 文字颜色 [ColorInt].
      */
     fun setSelectTextColor(@ColorInt textColor: Int) {
-        calendarManager.mSelectTextColor = textColor
+        calendarManager.selectTextColor = textColor
         monthAdapter?.refreshMonthData()
     }
 
@@ -377,7 +414,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textSize 文字大小 (sp).
      */
     fun setTextSize(textSize: Float) {
-        calendarManager.mTextSize = textSize
+        calendarManager.textSize = textSize
         monthAdapter?.refreshMonthData()
     }
 
@@ -387,7 +424,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param textSize 文字大小 (sp).
      */
     fun setSelectTextSize(textSize: Float) {
-        calendarManager.mSelectTextSize = textSize
+        calendarManager.selectTextSize = textSize
         monthAdapter?.refreshMonthData()
     }
 
@@ -397,7 +434,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param typeface [Typeface].
      */
     fun setTypeface(typeface: Typeface?) {
-        calendarManager.mTypeface = typeface
+        calendarManager.typeface = typeface
         monthAdapter?.refreshMonthData()
     }
 
@@ -407,9 +444,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param background 背景 drawable.
      */
     fun setDayBackground(background: Drawable?) {
-        if (background != null && calendarManager.mDayBackground !== background) {
-            calendarManager.mDayBackground = background
-            setCompoundDrawablesWithIntrinsicBounds(calendarManager.mDayBackground)
+        if (background != null && calendarManager.dayBackground !== background) {
+            calendarManager.dayBackground = background
+            setCompoundDrawablesWithIntrinsicBounds(calendarManager.dayBackground)
         }
     }
 
@@ -419,9 +456,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param background 背景 drawable.
      */
     fun setTodayBackground(background: Drawable?) {
-        if (background != null && calendarManager.mTodayBackground !== background) {
-            calendarManager.mTodayBackground = background
-            setCompoundDrawablesWithIntrinsicBounds(calendarManager.mTodayBackground)
+        if (background != null && calendarManager.todayBackground !== background) {
+            calendarManager.todayBackground = background
+            setCompoundDrawablesWithIntrinsicBounds(calendarManager.todayBackground)
         }
     }
 
@@ -431,9 +468,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param background 背景 drawable.
      */
     fun setSelectDayBackground(background: Drawable?) {
-        if (background != null && calendarManager.mSelectDayBackground !== background) {
-            calendarManager.mSelectDayBackground = background
-            setCompoundDrawablesWithIntrinsicBounds(calendarManager.mSelectDayBackground)
+        if (background != null && calendarManager.selectDayBackground !== background) {
+            calendarManager.selectDayBackground = background
+            setCompoundDrawablesWithIntrinsicBounds(calendarManager.selectDayBackground)
         }
     }
 
@@ -443,9 +480,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param background 背景 drawable.
      */
     fun setDisableDayBackground(background: Drawable?) {
-        if (background != null && calendarManager.mDisableDayBackground !== background) {
-            calendarManager.mDisableDayBackground = background
-            setCompoundDrawablesWithIntrinsicBounds(calendarManager.mDisableDayBackground)
+        if (background != null && calendarManager.disableDayBackground !== background) {
+            calendarManager.disableDayBackground = background
+            setCompoundDrawablesWithIntrinsicBounds(calendarManager.disableDayBackground)
         }
     }
 
@@ -455,7 +492,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
      * @param color 背景颜色 [ColorInt].
      */
     fun setRangeBackgroundColor(@ColorInt color: Int) {
-        calendarManager.mRangeBackgroundColor = color
+        calendarManager.rangeBackgroundColor = color
     }
 
     /**
@@ -482,7 +519,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          *
          * @return 格式化格式.
          */
-        get() = calendarManager.mDateFormatPattern
+        get() = calendarManager.dateFormatPattern
         /**
          * 设置日期格式化格式.
          *
@@ -490,9 +527,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          */
         set(pattern) {
             if (!TextUtils.isEmpty(pattern)) {
-                calendarManager.mDateFormatPattern = pattern
+                calendarManager.dateFormatPattern = pattern
             } else {
-                calendarManager.mDateFormatPattern = DATE_FORMAT_PATTERN
+                calendarManager.dateFormatPattern = DATE_FORMAT_PATTERN
             }
         }
 

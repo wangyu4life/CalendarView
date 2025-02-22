@@ -1,11 +1,14 @@
 package com.wyyzlxg.calendarviewdemo.ui
 
 import android.annotation.SuppressLint
+import android.graphics.Color
 import android.os.Bundle
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.cardview.widget.CardView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.github.wyyzlxg.CalendarView
@@ -24,7 +27,11 @@ class VerticalCalendarActivity : AppCompatActivity() {
         }
 
         val calendarView = findViewById<CalendarView>(R.id.calendarView)
+        calendarView.setSelectDayBackground(AppCompatResources.getDrawable(this, R.drawable.shape_selected_date))
         calendarView.setTodayBackground(AppCompatResources.getDrawable(this, R.drawable.shape_today_date))
+        calendarView.setDisableDayBackground(AppCompatResources.getDrawable(this, R.drawable.shape_disable_date))
+        calendarView.setSelectTextColor(Color.WHITE)
+        calendarView.setTextColor(Color.BLACK)
         calendarView.setOnDateClickListener(object : CalendarView.OnDateClickListener {
             override fun onDateClick(view: CalendarView, year: Int, month: Int, day: Int) {
                 Toast.makeText(this@VerticalCalendarActivity, "$year-${month + 1}-$day", Toast.LENGTH_SHORT).show()
@@ -38,7 +45,10 @@ class VerticalCalendarActivity : AppCompatActivity() {
             override fun onSelectedMonthChange(view: CalendarView, year: Int, month: Int) {
                 Toast.makeText(this@VerticalCalendarActivity, "当前日期：${year}-${month + 1}", Toast.LENGTH_SHORT).show()
             }
-
         })
+
+        findViewById<TextView>(R.id.tv_today).setOnClickListener {
+            calendarView.jumpToCurrentDate(System.currentTimeMillis())
+        }
     }
 }
