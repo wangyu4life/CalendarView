@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.github.wyyzlxg.adapter.MonthAdapter
 import com.github.wyyzlxg.manager.CalendarManager
+import com.github.wyyzlxg.utils.DateUtils
 import com.github.wyyzlxg.utils.DensityUtils
 import com.wangyu.calendarview.R
 import java.util.Calendar
@@ -230,6 +231,9 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
     fun setSelectDate(days: MutableList<String>) {
         calendarManager.selectDate.clear()
         calendarManager.selectDate.addAll(days)
+        if (calendarManager.selectDate.isNotEmpty()) {
+            jumpToCurrentDate(DateUtils.getTimeMillisWithPattern(calendarManager.selectDate[0], calendarManager.dateFormatPattern!!))
+        }
         monthAdapter?.refreshMonthData()
     }
 
