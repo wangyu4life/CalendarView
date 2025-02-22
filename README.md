@@ -10,7 +10,7 @@
 4. 支持当前日期样式，选中样式，不可选样式
 5. 支持跳转到指定日期
 
-![](https://s3.bmp.ovh/imgs/2025/02/22/72ff205eb1d4d858.gif)  ![](https://s3.bmp.ovh/imgs/2025/02/22/c5fbe7ff296daa26.gif)  ![](https://s3.bmp.ovh/imgs/2025/02/22/c2b0aeac453ea4f4.gif)|
+![](https://s3.bmp.ovh/imgs/2025/02/22/72ff205eb1d4d858.gif)  ![](https://s3.bmp.ovh/imgs/2025/02/22/c5fbe7ff296daa26.gif)  ![](https://s3.bmp.ovh/imgs/2025/02/22/c2b0aeac453ea4f4.gif)
 ![](https://s3.bmp.ovh/imgs/2025/02/22/254727d67bb7162d.gif)  ![](https://s3.bmp.ovh/imgs/2025/02/22/78ca4f1aeb4686ba.gif)
 
 ### 使用（Gradle）
