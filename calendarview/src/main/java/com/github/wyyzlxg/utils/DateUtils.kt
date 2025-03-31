@@ -19,6 +19,7 @@ object DateUtils {
      */
     fun getMonthDays(year: Int, month: Int): Int {
         val calendar = Calendar.getInstance(Locale.CHINA)
+        calendar.clear()
         calendar.set(Calendar.YEAR, year)
         calendar.set(Calendar.MONTH, month)
         return calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
@@ -48,9 +49,27 @@ object DateUtils {
      */
     fun getLastDayWeek(year: Int, month: Int): Int {
         val calendar = Calendar.getInstance(Locale.CHINA)
+        calendar.clear()
         calendar.set(Calendar.YEAR, year)
         calendar.set(Calendar.MONTH, month)
         calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH))
+        return calendar.get(Calendar.DAY_OF_WEEK)
+    }
+
+    /**
+     * 获取指定年月日位于周几.
+     *
+     * @param year  年.
+     * @param month 月.
+     * @param day   日.
+     * @return      周.
+     */
+    fun getDayWeek(year: Int, month: Int, day: Int): Int {
+        val calendar = Calendar.getInstance(Locale.CHINA)
+        calendar.clear()
+        calendar.set(Calendar.YEAR, year)
+        calendar.set(Calendar.MONTH, month)
+        calendar.set(Calendar.DAY_OF_MONTH, day)
         return calendar.get(Calendar.DAY_OF_WEEK)
     }
 

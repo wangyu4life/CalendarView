@@ -317,6 +317,7 @@ class CalendarView @JvmOverloads constructor(context: Context?, attrs: Attribute
          */
         set(calendar) {
             calendarManager.calendar = calendar
+            jumpToCurrentDate()
         }
     var startDate: Calendar?
         get() = calendarManager.startDate

@@ -370,8 +370,8 @@ internal class MonthView @JvmOverloads constructor(
             val index = mSelectDate.indexOf(date)
             when (index) {
                 0 -> {
-                    if ((day != 1 || DateUtils.getFirstDayWeek(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH]) != Calendar.SATURDAY) &&
-                        day != DateUtils.getMonthDays(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH])
+                    if (day != DateUtils.getMonthDays(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH]) &&
+                        DateUtils.getDayWeek(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH], day) != Calendar.SATURDAY
                     ) {
                         val rect = RectF(
                             (mColumnWidth * column + mColumnWidth / 2).toFloat(),
@@ -392,9 +392,7 @@ internal class MonthView @JvmOverloads constructor(
                 }
 
                 mSelectDate.size - 1 -> {
-                    if ((day != 1 || DateUtils.getFirstDayWeek(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH]) != Calendar.SATURDAY) &&
-                        (day != DateUtils.getMonthDays(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH]) ||
-                                DateUtils.getLastDayWeek(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH]) != Calendar.SUNDAY)
+                    if (day != 1 && DateUtils.getDayWeek(mCalendar[Calendar.YEAR], mCalendar[Calendar.MONTH], day) != Calendar.SUNDAY
                     ) {
                         val rect = RectF(
                             (mColumnWidth * column).toFloat(),
